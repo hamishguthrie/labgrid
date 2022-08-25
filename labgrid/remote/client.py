@@ -788,12 +788,14 @@ class ClientSession(ApplicationSession):
         from ..resource.remote import NetworkSysfsGPIO
         from ..resource.remote import NetworkLXAIOBusPIO
         from ..resource.remote import NetworkHIDRelay
+        from ..resource.remote import NetworkS2PiRelay
         from ..driver.modbusdriver import ModbusCoilDriver
         from ..driver.onewiredriver import OneWirePIODriver
         from ..driver.deditecrelaisdriver import DeditecRelaisDriver
         from ..driver.gpiodriver import GpioDigitalOutputDriver
         from ..driver.lxaiobusdriver import LXAIOBusPIODriver
         from ..driver.usbhidrelay import HIDRelayDriver
+        from ..driver.s2pirelay import S2PiRelayDriver
 
         drv = None
         try:
@@ -836,6 +838,12 @@ class ClientSession(ApplicationSession):
                     except NoDriverFoundError:
                         target.set_binding_map({"relay": name})
                         drv = HIDRelayDriver(target, name=name)
+                elif isinstance(resource, NetworkS2PiRelay):
+                    try:
+                        drv = target.get_driver(S2PiRelayDriver, name=name)
+                    except NoDriverFoundError:
+                        target.set_binding_map({"relay": name})
+                        drv = S2PiRelayDriver(target, name=name)
                 if drv:
                     break
 

@@ -312,6 +312,21 @@ class NetworkHIDRelay(RemoteUSBResource):
 
 @target_factory.reg_resource
 @attr.s(eq=False)
+class NetworkS2PiRelay(NetworkResource, ManagedResource):
+    """The NetworkS2PiRelay describes a remotely accessible 52Pi relay port"""
+    manager_cls = RemotePlaceManager
+
+    busnum = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(int)))
+    devnum = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(int)))
+    index = attr.ib(default=1, validator=attr.validators.instance_of(int))
+    invert = attr.ib(default=False, validator=attr.validators.instance_of(bool))
+    def __attrs_post_init__(self):
+        self.timeout = 10.0
+        super().__attrs_post_init__()
+
+
+@target_factory.reg_resource
+@attr.s(eq=False)
 class NetworkSysfsGPIO(NetworkResource, ManagedResource):
     manager_cls = RemotePlaceManager
 

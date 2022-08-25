@@ -1,0 +1,12 @@
+dut-2:
+  USBSerialPort:
+    match:
+      ID_PATH: platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0
+    speed: 115200
+  USBSDMuxDevice:
+    match:
+      ID_PATH: platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2.1
+  S2PiRelay:
+    busnum: 1
+    devnum: 0x11
+    index: 2
