@@ -23,3 +23,4 @@ from .provider import TFTPProvider
 from .mqtt import TasmotaPowerPort
 from .httpvideostream import HTTPVideoStream
 from .s2pirelay import S2PiRelay
+from .s2pipowerport import S2PiPowerPort

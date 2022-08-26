@@ -424,6 +424,27 @@ class SiSPMPowerPortExport(USBGenericExport):
         }
 
 @attr.s(eq=False)
+class S2PiPowerPortExport(ResourceExport):
+    """ResourceExport for ports on 52Pi relays"""
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+        local_cls_name = self.cls
+        self.data['cls'] = f"Network{self.cls}"
+        from ..resource import s2pipowerport
+        local_cls = getattr(s2pipowerport, local_cls_name)
+        self.local = local_cls(target=None, name=None, **self.local_params)
+
+    def _get_params(self):
+        """Helper function to return parameters"""
+        return {
+            'host': self.host,
+            'busnum': self.local.busnum,
+            'devnum': self.local.devnum,
+            'index': self.local.index,
+        }
+
+@attr.s(eq=False)
 class S2PiRelayExport(ResourceExport):
     """ResourceExport for outputs on 52Pi relays"""
 
@@ -535,6 +556,7 @@ exports["HIDRelay"] = USBHIDRelayExport
 exports["USBFlashableDevice"] = USBFlashableExport
 exports["LXAUSBMux"] = USBGenericExport
 exports["S2PiRelay"] = S2PiRelayExport
+exports["S2PiPowerPort"] = S2PiPowerPortExport
 
 @attr.s(eq=False)
 class ProviderGenericExport(ResourceExport):

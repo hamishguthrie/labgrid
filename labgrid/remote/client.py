@@ -727,10 +727,12 @@ class ClientSession(ApplicationSession):
         delay = self.args.delay
         target = self._get_target(place)
         from ..driver.powerdriver import (NetworkPowerDriver, PDUDaemonDriver,
-                                          USBPowerDriver, SiSPMPowerDriver)
+                                          USBPowerDriver, SiSPMPowerDriver,
+                                          S2PiPowerDriver)
         from ..driver.mqtt import TasmotaPowerDriver
         from ..resource.power import NetworkPowerPort, PDUDaemonPort
-        from ..resource.remote import (NetworkUSBPowerPort, NetworkSiSPMPowerPort)
+        from ..resource.remote import (NetworkUSBPowerPort, NetworkSiSPMPowerPort,
+                                       NetworkS2PiPowerPort)
         from ..resource.mqtt import TasmotaPowerPort
 
         drv = None
@@ -763,6 +765,11 @@ class ClientSession(ApplicationSession):
                         drv = target.get_driver(TasmotaPowerDriver)
                     except NoDriverFoundError:
                         drv = TasmotaPowerDriver(target, name=None)
+                elif isinstance(resource, NetworkS2PiPowerPort):
+                    try:
+                        drv = target.get_driver(S2PiPowerDriver)
+                    except NoDriverFoundError:
+                        drv = S2PiPowerDriver(target, name=None)
                 if drv:
                     break
 

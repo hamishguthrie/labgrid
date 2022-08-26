@@ -11,8 +11,10 @@ from ..resource import NetworkPowerPort
 from ..step import step
 from ..util.proxy import proxymanager
 from ..util.helper import processwrapper
+from ..util.agentwrapper import AgentWrapper
 from .common import Driver
 from .exception import ExecutionError
+from ..resource.remote import NetworkS2PiPowerPort
 
 
 @attr.s(eq=False)
@@ -378,3 +380,52 @@ class PDUDaemonDriver(Driver, PowerResetMixin, PowerProtocol):
     @Driver.check_active
     def get(self):
         return None
+
+@target_factory.reg_driver
+@attr.s(eq=False)
+class S2PiPowerDriver(Driver, PowerResetMixin, PowerProtocol):
+    """S2PiPowerDriver - Driver to use a 52pi Relay hat to switch power using i2c
+       https://wiki.52pi.com/index.php?title=EP-0099"""
+
+    bindings = {"port": {"S2PiPowerPort", "NetworkS2PiPowerPort"}, }
+    delay = attr.ib(default=2.0, validator=attr.validators.instance_of(float))
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+        self.wrapper = None
+
+    def on_activate(self):
+        if isinstance(self.port, NetworkS2PiPowerPort):
+            host = self.port.host
+        else:
+            host = None
+        self.wrapper = AgentWrapper(host)
+        self.proxy = self.wrapper.load('s2pi_relay')
+
+    def on_deactivate(self):
+        self.wrapper.close()
+        self.wrapper = None
+        self.proxy = None
+
+    @Driver.check_active
+    @step()
+    def on(self):
+        self.proxy.set(self.port.busnum, self.port.devnum, self.port.index, 1)
+
+    @Driver.check_active
+    @step()
+    def off(self):
+        self.proxy.set(self.port.busnum, self.port.devnum, self.port.index, 0)
+
+    @Driver.check_active
+    @step()
+    def cycle(self):
+        self.off()
+        time.sleep(self.delay)
+        self.on()
+
+    @Driver.check_active
+    @step()
+    def get(self):
+        status = self.proxy.get(self.port.busnum, self.port.devnum, self.port.index)
+        return True if status else False
