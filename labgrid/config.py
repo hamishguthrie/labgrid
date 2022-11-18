@@ -46,7 +46,22 @@ class Config:
             raise InvalidConfigError(
                 f"configuration file '{self.filename}' is invalid: {e}"
             )
+            
+    def resolve_path_extension( func_resolve_path ):
+        """ In case a url is provided instead of a local path, avoid adding the base-prefix and keep the raw URL"""
+        import urllib
 
+        def resolve_path_or_url(*args, **kwargs ):
+
+            f_path = kwargs["path"] if "path" in kwargs.keys() else args[1]
+            if urllib.parse.urlparse(f_path).scheme in ["http", "https"]:
+                return args[1]
+            else:
+                return func_resolve_path(*args, **kwargs)
+        return resolve_path_or_url
+
+
+    @resolve_path_extension
     def resolve_path(self, path):
         """Resolve an absolute path
 
