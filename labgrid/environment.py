@@ -19,6 +19,9 @@ class Environment:
 
         self.config = Config(self.config_file)
 
+        # in case URLs are provided, substitute the URLs by temporary file paths
+        self.tweak_urls()
+
         for user_import in self.config.get_imports():
             import importlib.util
             from importlib.machinery import SourceFileLoader
@@ -34,6 +37,39 @@ class Environment:
                 module_name = user_import
                 module = importlib.import_module(user_import)
             sys.modules[module_name] = module
+
+    def tweak_urls(self):
+        """
+        For each given image URL, pull the image and save it into a temporary directory. Memorize the filehandles for
+        final deletion.
+        """
+        import urllib
+        import requests
+        import tempfile
+        import pathlib
+
+        self.tmp_file_handles = []
+        if "images" in self.config.data.keys():
+
+            # remember the urls
+            self.config.data["images_"] = self.config.data["images"].copy()
+
+            for path_or_url in self.config.data["images"]:
+                if urllib.parse.urlparse(self.config.data["images"][path_or_url]).scheme in ["http", "https"]:
+
+                    img_pulled = requests.get(self.config.data["images"][path_or_url], allow_redirects=True)
+                    assert img_pulled.status_code == 200, Exception("wrong URL - download failed")
+
+                    tmpf = tempfile.NamedTemporaryFile()
+                    tmpf.write(img_pulled.content)
+                    self.tmp_file_handles.append(tmpf)
+
+                    self.config.data["images"][path_or_url] = pathlib.Path(tempfile.gettempdir()).joinpath(tmpf.name).__str__()
+
+    def __del__(self):
+        """Clean temporary files"""
+        if self.tmp_file_handles:
+            _ = [f.close() for f in self.tmp_file_handles]
 
     def get_target(self, role: str = 'main') -> Optional[Target]:
         """Returns the specified target or None if not found.
