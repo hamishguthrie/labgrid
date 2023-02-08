@@ -13,3 +13,4 @@ ansicolors==1.1.8
 pyusb==1.2.1
 six>=1.13.0
 smbus>=1.1
+websocket-client==1.5.1
