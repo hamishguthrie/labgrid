@@ -19,7 +19,16 @@ class Target:
     name = attr.ib(validator=attr.validators.instance_of(str))
     env = attr.ib(default=None)
 
+    # allow additional keyword-based attributes which will be attached to target
+    additional_kwargs = attr.ib(default=None, repr=False)
+
     def __attrs_post_init__(self):
+
+        # register the passed in keyword-based arguments as instance variables
+        if self.additional_kwargs:
+            self.__dict__.update(self.additional_kwargs)
+            self.__dict__.__delitem__("additional_kwargs")
+
         self.log = logging.getLogger(f"target({self.name})")
         self.resources = []
         self.drivers = []
