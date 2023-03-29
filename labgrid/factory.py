@@ -143,10 +143,20 @@ class TargetFactory:
     def make_target(self, name, config, *, env=None):
         from .target import Target
 
-        target = Target(name, env=env)
+        # attach further attributes to the target object
+        resources = config.__getitem__("resources")
+        remoteplace = resources.__getitem__("RemotePlace")
+        # by default: only the 'name' attribute is defined, determine if there are further keyword-attributes
+        additional_kwargs = dict(filter(lambda x: x if x[0] != "name" else None, remoteplace.items()))
+
+        # extend target constructor by additionally derrived kwargs
+        target = Target(name, env=env, additional_kwargs=additional_kwargs)
+
         for item in TargetFactory._convert_to_named_list(config.get('resources', {})):
             resource = item.pop('cls')
             name = item.pop('name', None)
+            # remove 'additionally' defined keyword based arguments (otherwise a warning is raised)
+            _ = [item.pop(x, 'None') for x in additional_kwargs.keys()]
             args = item # remaining args
             self.make_resource(target, resource, name, args)
         for item in TargetFactory._convert_to_named_list(config.get('drivers', {})):
